@@ -1,5 +1,6 @@
 from . import ast as A
 
+
 def reduce(function, iterable, initializer=None):
     it = iter(iterable)
     if initializer is None:
@@ -10,18 +11,23 @@ def reduce(function, iterable, initializer=None):
         value = function(value, element)
     return value
 
+
 varNumber = 0
+
 
 def bindingId(b):
     return b[2]
+
 
 def incrementId():
     global varNumber
     varNumber = varNumber + 1
     return varNumber
 
+
 def getVarNumber():
     return incrementId()
+
 
 def union(s1, s2):
     if not s1:
@@ -32,7 +38,8 @@ def union(s1, s2):
         return union(s1[1:], s2)
     else:
         return [s1[0]] + union(s1[1:], s2)
- 
+
+
 def diff(s1, s2):
     if not s1:
         return []
@@ -40,12 +47,14 @@ def diff(s1, s2):
         return diff(s1[1:], s2)
     else:
         return [s1[0]] + diff(s1[1:], s2)
- 
+
+
 def unionMulti(ls):
     if not ls:
         return []
     return reduce(union, ls)
- 
+
+
 def fv(ast):
     if A.isRef(ast):
         r = [A.refVar(ast)]
@@ -58,16 +67,18 @@ def fv(ast):
         return r
     r = unionMulti([fv(i) for i in A.astSubx(ast)])
     return r
- 
+
+
 def posInList1(x, lst):
     if not lst:
         return -1
- 
+
     for i, e in enumerate(lst):
         if e == x:
             return i
- 
+
     return -1
+
 
 def posInList(x, lst):
     r = posInList1(x, lst)
@@ -77,13 +88,16 @@ def posInList(x, lst):
 def newVar(i):
     return A.makeVar(i, '{i}.{n}'.format(i=i, n=getVarNumber()))
 
+
 def newGlobalVar(i):
     return A.makeVar(i, i)
+
 
 def isGlobalVar(v):
     return bindingId(v) == A.varUid(v)
 
-def extend1 (r, l1, l2):
+
+def extend1(r, l1, l2):
     c1 = len(l1)
     c2 = len(l2)
     if c1 == 0 and c2 == 0:
@@ -93,7 +107,8 @@ def extend1 (r, l1, l2):
     elif c2 > 0:
         return extend1([l2[0]] + r, l1, l2[1:])
 
-def extendClj (bindings, env):
+
+def extendClj(bindings, env):
     return extend1([], bindings, env)
 
 
@@ -105,4 +120,3 @@ def lookup(identifier, env):
         return env[0]
     else:
         return lookup(identifier, env[1:])
-

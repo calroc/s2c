@@ -22,5 +22,6 @@ with open(sourceName) as f:
     c = clconvert.closureConvert(b)
 
     code = codegen.codeGenerate(c)
-    if not dll: print('#define __STANDALONE_EXE__\n')
+    if not dll:
+        print('#define __STANDALONE_EXE__\n')
     print(code)

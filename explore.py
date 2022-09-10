@@ -7,6 +7,7 @@ from compiler import string2ast
 from compiler import symbol
 import itertools
 
+
 def py2clj(s):
     s1 = str.replace(str(s), '[', '(')
     s2 = str.replace(s1, ']', ')')
@@ -14,7 +15,10 @@ def py2clj(s):
     s4 = str.replace(s3, ',', '')
     return s4
 
-colorList = itertools.cycle(['red', 'green', 'blue', 'black', 'darkgreen', 'purple'])
+
+colorList = itertools.cycle(
+    ['red', 'green', 'blue', 'black', 'darkgreen', 'purple']
+)
 
 css = '''
 <style>
@@ -41,13 +45,16 @@ div .bracket {
 </style>
 '''
 
+
 def scheme2html(s):
     i = 0
-    output=[]
+    output = []
     for c in s:
         if c == '(':
             color = next(colorList)
-            output.append(f'<div class="bracket">(<div style="border-color:{color}" class="lisp">')
+            output.append(
+                f'<div class="bracket">(<div style="border-color:{color}" class="lisp">'
+            )
             continue
         if c == ')':
             output.append('</div>)</div>')
@@ -57,18 +64,18 @@ def scheme2html(s):
 
 
 schemes = [
-        '''10''',
-        '''
+    '''10''',
+    '''
         (define x 10)
         x
         ''',
-        '''
+    '''
         (define func (lambda (x) x))
         (func 20)''',
-        '''
+    '''
         (define func (lambda (x) (lambda (y) (+ x y))))
-        (func 20)'''
-        ]
+        (func 20)''',
+]
 
 with open('report.html', 'w') as report:
     report.write(f'<html>{css}<body>')
