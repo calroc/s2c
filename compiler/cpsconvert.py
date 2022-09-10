@@ -7,12 +7,10 @@ from . import symbol as S
 def cpsConvert(ast):
     def cps(ast, contAst):
         if A.isLit(ast):
-            ret = A.makeApp([contAst, ast])
-            return ret
+            return A.makeApp([contAst, ast])
 
         if A.isRef(ast):
-            ret = A.makeApp([contAst, ast])
-            return ret
+            return A.makeApp([contAst, ast])
 
         if A.isSetClj(ast):
 
@@ -21,8 +19,7 @@ def cpsConvert(ast):
                     [contAst, A.makeSet(val, A.setVar(ast))]
                 )
 
-            ret = cpsList(A.astSubx(ast), fn)
-            return ret
+            return cpsList(A.astSubx(ast), fn)
 
         if A.isCnd(ast):
 
@@ -31,26 +28,23 @@ def cpsConvert(ast):
                     testExp = test[0]
                     ifClause = A.astSubx(ast)[1]
                     elseClause = A.astSubx(ast)[2]
-                    ret = A.makeCnd(
+                    return A.makeCnd(
                         [
                             testExp,
                             cps(ifClause, contAst),
                             cps(elseClause, contAst),
                         ]
                     )
-                    return ret
 
                 return cpsList([A.astSubx(ast)[0]], fn)
 
             if A.isRef(contAst):
-                ret = xform(contAst)
-                return ret
-            else:
-                k = S.newVar('k')
-                ret = A.makeApp(
-                    [A.makeLam([xform(A.makeRef([], k))], [k]), contAst]
-                )
-                return ret
+                return xform(contAst)
+
+            k = S.newVar('k')
+            return A.makeApp(
+                [A.makeLam([xform(A.makeRef([], k))], [k]), contAst]
+            )
 
         if A.isPrim(ast):
 
@@ -59,8 +53,7 @@ def cpsConvert(ast):
                     [contAst, A.makePrim(args, A.primOp(ast))]
                 )
 
-            ret = cpsList(A.astSubx(ast), fn)
-            return ret
+            return cpsList(A.astSubx(ast), fn)
 
         if A.isApp(ast):
             func = A.astSubx(ast)[0]
@@ -77,13 +70,12 @@ def cpsConvert(ast):
             if A.isLam(func):
                 ret = cpsList(A.astSubx(ast)[1:], fn1)
                 return ret
-            else:
-                ret = cpsList(A.astSubx(ast), fn2)
-                return ret
+
+            return cpsList(A.astSubx(ast), fn2)
 
         if A.isLam(ast):
             k = S.newVar("k")
-            ret = A.makeApp(
+            return A.makeApp(
                 [
                     contAst,
                     A.makeLam(
@@ -92,11 +84,9 @@ def cpsConvert(ast):
                     ),
                 ]
             )
-            return ret
 
         if A.isSeqClj(ast):
-            ret = cpsSeq(A.astSubx(ast), contAst)
-            return ret
+            return cpsSeq(A.astSubx(ast), contAst)
 
         print('Unknown AST {}'.format(ast))
         exit()
@@ -106,8 +96,7 @@ def cpsConvert(ast):
             def fn(newAsts):
                 return inner([x] + newAsts)
 
-            ret = cpsList(asts[1:], fn)
-            return ret
+            return cpsList(asts[1:], fn)
 
         if not asts:
             return inner([])
@@ -140,5 +129,4 @@ def cpsConvert(ast):
             '(set! call/cc (lambda (k f) (f k (lambda (_ result) (k result)))))'
         )
         return A.makeApp([l, x])
-    else:
-        return cpsAst
+    return cpsAst

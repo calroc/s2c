@@ -206,10 +206,6 @@ def xeLookup(sym, cte):
 xeGlobalCte = makeInitialCte()
 
 
-def parseSchemeString(scheme_text):
-    return P.parse(f'(begin {scheme_text})')
-
-
 def parse(scheme_text):
-    p = parseSchemeString(scheme_text)
+    p = P.parse(f'(begin {scheme_text})')
     return xe(p, [])
