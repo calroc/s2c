@@ -4,23 +4,21 @@ from . import symbol as S
 
 
 def py2clj(s):
-    s1 = str.replace(s, '[', '(')
-    s2 = str.replace(s1, ']', ')')
-    s3 = str.replace(s2, '\'', '')
-    s4 = str.replace(s3, ',', '')
-    return s4
+    return (
+        s.replace('[', '(')
+        .replace(']', ')')
+        .replace('\'', '')
+        .replace(',', '')
+    )
 
 
 def xe(e, cte):
     if A.isConstExpr(e):
-        r = xeConstExpr(e, cte)
-        return r
+        return xeConstExpr(e, cte)
     if A.isIdentExpr(e):
-        r = xeIdentExpr(e, cte)
-        return r
+        return xeIdentExpr(e, cte)
     if A.isFormExpr(e):
-        r = xeFormExpr(e, cte)
-        return r
+        return xeFormExpr(e, cte)
     print('Syntax error {}'.format(e))
     exit()
 
@@ -33,9 +31,8 @@ def xeIdentExpr(e, cte):
     b = xeLookup(e, cte)
     if A.isVarClj(b):
         return A.makeRef([], b)
-    else:
-        print("Can't reference nonvariable")
-        exit()
+    print("Can't reference nonvariable")
+    exit()
 
 
 def xeFormExpr(e, cte):
@@ -43,10 +40,8 @@ def xeFormExpr(e, cte):
     b = A.isIdentExpr(h) and xeLookup(h, cte)
     if A.isMacro(b):
         f = A.macroExpander(b)
-        r = f(e, cte)
-        return r
-    else:
-        return A.makeApp(xeExprs(e, cte))
+        return f(e, cte)
+    return A.makeApp(xeExprs(e, cte))
 
 
 def xeExprs(le, cte):
@@ -58,11 +53,11 @@ def makeInitialCte():
         def m(e, cte):
             if len(e[1:]) == n:
                 return A.makePrim(xeExprs(e[1:], cte), op)
-            else:
-                print('Expecting {} args'.format(n))
-                exit()
+            print('Expecting {} args'.format(n))
+            exit()
 
-        return lambda x, y: m(x, y)
+        return m
+        #return lambda x, y: m(x, y)
 
     def setFunc(e, cte):
         if len(e) == 3:  # Needs to be (set! variableName variableValue)
@@ -71,9 +66,8 @@ def makeInitialCte():
             if A.isVarClj(varBinding):
                 varValue = e[2:]
                 return A.makeSet(xeExprs(varValue, cte), varBinding)
-            else:
-                print('Not a valid set expression {}'.format(e))
-                exit()
+            print('Not a valid set expression {}'.format(e))
+            exit()
 
     def defFunc(e, cte):
         return xe(['set!'] + e[1:], cte)
@@ -81,11 +75,10 @@ def makeInitialCte():
     def ifFunc(e, cte):
         if len(e) == 4:
             return A.makeCnd(xeExprs(e[1:], cte))
-        elif len(e) == 3:
+        if len(e) == 3:
             return xe(['if', e[1], e[2], False], cte)
-        else:
-            print("Bad if")
-            exit()
+        print("Bad if")
+        exit()
 
     def lambdaFunc(e, cte):
         if len(e) >= 2:
@@ -93,17 +86,15 @@ def makeInitialCte():
             body = e[2:]
             newCte = S.extendClj(params, cte)
             return A.makeLam([xe(['begin'] + body, newCte)], params)
-        else:
-            print("Lambda expects a parameter")
-            exit()
+        print("Lambda expects a parameter")
+        exit()
 
     def beginFunc(e, cte):
         if len(e) == 1:
             return xe(False, cte)
-        elif len(e) == 2:
+        if len(e) == 2:
             return xe(e[1], cte)
-        else:
-            return A.makeSeq(xeExprs(e[1:], cte))
+        return A.makeSeq(xeExprs(e[1:], cte))
 
     def letFunc(e, cte):
         if len(e) >= 2:
@@ -113,49 +104,48 @@ def makeInitialCte():
             return xe(
                 [['lambda', bindingNames] + body] + bindingValues, cte
             )
-        else:
-            print('BAD LET {}'.format(e))
-            exit()
+        print('BAD LET {}'.format(e))
+        exit()
 
     def orFunc(e, cte):
         if len(e) == 1:
             return xe(False, cte)
-        elif len(e) == 2:
+        if len(e) == 2:
             return xe(e[1], cte)
-        else:
-            x1 = py2clj(str(e[1]))
-            x2 = py2clj(' '.join([str(x) for x in e[2:]]))
-            s = ''.join(
-                [
-                    "((lambda (t1 t2) (if t1 t1 (t2))) ",
-                    x1,
-                    "(lambda () (or ",
-                    x2,
-                    ")))",
-                ]
-            )
-            x3 = P.parse(s)
-            return xe(x3, cte)
+
+        x1 = py2clj(str(e[1]))
+        x2 = py2clj(' '.join([str(x) for x in e[2:]]))
+        s = ''.join(
+            [
+                "((lambda (t1 t2) (if t1 t1 (t2))) ",
+                x1,
+                "(lambda () (or ",
+                x2,
+                ")))",
+            ]
+        )
+        x3 = P.parse(s)
+        return xe(x3, cte)
 
     def andFunc(e, cte):
         if len(e) == 1:
             return xe(True, cte)
-        elif len(e) == 2:
+        if len(e) == 2:
             return xe(e[1], cte)
-        else:
-            x1 = py2clj(str(e[1]))
-            x2 = py2clj(' '.join([str(x) for x in e[2:]]))
-            s = ''.join(
-                [
-                    "((lambda (t1 t2) (if t1 (t2) t1)) ",
-                    x1,
-                    "(lambda () (and ",
-                    x2,
-                    ")))",
-                ]
-            )
-            x3 = P.parse(s)
-            return xe(x3, cte)
+
+        x1 = py2clj(str(e[1]))
+        x2 = py2clj(' '.join([str(x) for x in e[2:]]))
+        s = ''.join(
+            [
+                "((lambda (t1 t2) (if t1 (t2) t1)) ",
+                x1,
+                "(lambda () (and ",
+                x2,
+                ")))",
+            ]
+        )
+        x3 = P.parse(s)
+        return xe(x3, cte)
 
     return [
         A.makeMacro('=', binOp('%=', 2)),
@@ -216,12 +206,10 @@ def xeLookup(sym, cte):
 xeGlobalCte = makeInitialCte()
 
 
-def parseSchemeString(s):
-    sPrime = '(begin {})'.format(s)
-    return P.parse(sPrime)
+def parseSchemeString(scheme_text):
+    return P.parse(f'(begin {scheme_text})')
 
 
-def parse(input):
-    p = parseSchemeString(input)
-    a = xe(p, [])
-    return a
+def parse(scheme_text):
+    p = parseSchemeString(scheme_text)
+    return xe(p, [])
